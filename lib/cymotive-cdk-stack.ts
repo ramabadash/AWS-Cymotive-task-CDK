@@ -9,6 +9,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 import {
   Role,
   ServicePrincipal,
@@ -17,9 +18,15 @@ import {
   Effect,
   ArnPrincipal,
 } from 'aws-cdk-lib/aws-iam'; // IAM
-import { LambdaIntegration } from 'aws-cdk-lib/aws-apigateway'; // API Gateway
+import {
+  LambdaIntegration,
+  IntegrationOptions,
+  PassthroughBehavior,
+  AwsIntegration,
+} from 'aws-cdk-lib/aws-apigateway'; // API Gateway
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'; // DynamoDb
 import { EventType } from 'aws-cdk-lib/aws-s3'; // S3
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'; // lambda and sqs
 
 /********** MAIN SECTION **********/
 
@@ -35,10 +42,19 @@ export class CymotiveCdkStack extends Stack {
       },
     });
 
+    // Role for the api gateway
+    const idsGatewayRole = new Role(this, 'ids-gateway-role-cdk', {
+      assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
+    });
+
     // S3 Bucket
     const reportsBucket = new s3.Bucket(this, 'reports-bucket', {
-      // versioned: true,
       bucketName: 'cymotive-task-bucket-cdk',
+    });
+
+    //Create queue
+    const recordsQueue = new sqs.Queue(this, 'records-sqs-queue-cdk', {
+      queueName: 'cymotive-task-records-queue',
     });
 
     // Porter role
@@ -84,9 +100,47 @@ export class CymotiveCdkStack extends Stack {
       role: porterRole,
     });
 
-    // POST request from the ids-gateway-cdk to the porter lambda
-    idsGateway.root.addMethod('POST', new LambdaIntegration(porter));
+    //Add route to gateway
+    const methodOptions: IntegrationOptions = {
+      credentialsRole: idsGatewayRole,
+      passthroughBehavior: PassthroughBehavior.NEVER,
+      requestParameters: {
+        'integration.request.header.Content-Type':
+          "'application/x-www-form-urlencoded'",
+      },
+      requestTemplates: {
+        'application/json':
+          'Action=SendMessage&QueueUrl=$util.urlEncode("' +
+          recordsQueue.queueUrl +
+          '")&MessageBody=$util.urlEncode($input.body)', //Request body
+      },
+      integrationResponses: [{ statusCode: '200' }],
+    };
 
+    // POST request from the ids-gateway-cdk to the porter lambda
+    //And integration between api gateway and sqs
+    idsGateway.root.addMethod(
+      'POST',
+      new AwsIntegration({
+        service: 'sqs',
+        region: this.region,
+        path: `${this.account}/${recordsQueue.queueName}`,
+        integrationHttpMethod: 'POST',
+        options: methodOptions,
+      }),
+      { methodResponses: [{ statusCode: '200' }] }
+    );
+
+    //Add trigger to porter
+    porter.addEventSource(
+      new SqsEventSource(recordsQueue, {
+        enabled: true,
+      })
+    );
+
+    //Grant permissions to queue
+    recordsQueue.grantSendMessages(idsGatewayRole);
+    recordsQueue.grantConsumeMessages(porterRole);
     /***** PHASE 2 *****/
 
     //DynamoDB Table
