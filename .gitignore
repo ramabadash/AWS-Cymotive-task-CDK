@@ -1,4 +1,6 @@
-*.js
+cymotive-cdk-stack.js
+cymotive-cdk.js
+cymotive-cdk.test.js
 !jest.config.js
 *.d.ts
 node_modules
