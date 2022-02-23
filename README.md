@@ -1,5 +1,17 @@
 # AWS exercise
 
+## Task to practice working with aws in collaboration with cymotive company.
+
+### 1️⃣ Getting Started - Implementing the various services by using an aws-console.
+
+### 2️⃣ Second stage (current solution) - Solving the task by implementing infrastructure as code with AWS CDK
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/f/fd/DynamoDB.png" height="50px" width="50px"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Orange_lambda.svg/980px-Orange_lambda.svg.png" height="50px" width="50px"><img src="https://www.pulumi.com/logos/tech/aws_cloudformation.png" height="50px" width="50px"><img src="https://openclipart.org/download/316471/1552081289.svg" height="50px" width="50px"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Amazon-S3-Logo.svg/1200px-Amazon-S3-Logo.svg.png" height="50px" width="50px"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Typescript_logo_2020.svg/1200px-Typescript_logo_2020.svg.png" height="50px" width="50px"><img src="https://pbs.twimg.com/profile_images/1204688402156785664/NVodpF59_400x400.png" height="50px" width="50px"><img src="https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/App_Services_copy_Amazon_SQS-512.png" height="50px" width="50px">
+
+---
+
+## Task instructions -
+
 You will build an Intrusion detection system (IDS) system to detect anomalies in vehicles using AWS Cloud. In this assignment you will develop ETL (Extract, transform, load) data pipelines to gather data from a vehicle and put them into a single location to query and extract insights.
 
 You will use mock data reports located in the attached file called 'reports.json'.
@@ -7,8 +19,6 @@ You will use mock data reports located in the attached file called 'reports.json
 In the first stage, you will focus on collecting and saving the reports into a Data Lake .
 In the second stage, the system will have also the ability to save the reports into DynamoDb.
 In the third stage, you will add the ability to read and analyze the already saved reports.
-
----
 
 ## Topics :
 
